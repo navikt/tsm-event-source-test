@@ -1,0 +1,60 @@
+name: Build and deploy
+on: push
+
+env:
+  NPM_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
+
+permissions:
+  packages: 'write'
+  contents: 'read'
+  id-token: 'write'
+
+jobs:
+  build-and-publish:
+    name: Bygg, test og push Docker image
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.docker-build-push.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+      - run: bun install --frozen-lockfile
+      - run: bun test
+      - name: Push docker image to GAR
+        uses: nais/docker-build-push@v0
+        id: docker-build-push
+        with:
+          team: tsm
+          identity_provider: ${{ secrets.NAIS_WORKLOAD_IDENTITY_PROVIDER }}
+          project_id: ${{ vars.NAIS_MANAGEMENT_PROJECT_ID }}
+
+  deploy-to-dev-gcp:
+    if: github.ref == 'refs/heads/main'
+    name: Deploy to dev
+    environment:
+      name: dev
+    needs: [build-and-publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: dev-gcp
+          RESOURCE: nais/nais-dev.yaml
+          VAR: image=${{ needs.build-and-publish.outputs.image }}
+
+  deploy-to-prod-gcp:
+    if: github.ref == 'refs/heads/main'
+    name: Deploy to prod
+    environment:
+      name: prod
+    #needs: [build-and-publish, deploy-to-dev-gcp]
+    needs: [build-and-publish]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          CLUSTER: prod-gcp
+          RESOURCE: nais/nais.yaml
+          VAR: image=${{ needs.build-and-publish.outputs.image }}
