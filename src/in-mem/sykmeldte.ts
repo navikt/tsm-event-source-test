@@ -1,4 +1,5 @@
 import * as R from 'remeda'
+import logger from '../utils/logger.ts'
 
 class Sykmeldte {
     public hasStarted = false
@@ -51,6 +52,8 @@ class Sykmeldte {
         const now = new Date()
         const expired = Object.entries(this._sykmeldt).filter(([_, value]) => value.expiry < now)
         expired.forEach(([key]) => delete this._sykmeldt[key])
+
+        logger.info(`Evicted ${expired.length} from the cache`)
     }
 
     /**

@@ -16,6 +16,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "croner": "^8.0.1",
     "date-fns": "^3.4.0",
     "elysia": "^0.8.17",
     "kafkajs": "^2.2.4",
