@@ -3,7 +3,7 @@ import { type BekreftetSykmeldingType, getLatestTom, isSykmeldingNow } from '../
 import inMem from '../in-mem/sykmeldte.ts'
 import type { KafkaMessage } from 'kafkajs'
 import mps from '../utils/mps.ts'
-import { BEKREFTET_TOPIC, processFromByPartition, SENDT_TOPIC } from './topic.ts'
+import { BEKREFTET_TOPIC, SENDT_TOPIC } from './topic.ts'
 import { consumer, initSykmeldingConsumer, setSykmeldingConsumerOffsetToEvergreen } from './consumer-config.ts'
 
 function handleTopicMessage(now: Date) {

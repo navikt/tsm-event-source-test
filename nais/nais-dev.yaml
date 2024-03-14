@@ -32,3 +32,18 @@ spec:
     requests:
       cpu: 150m
       memory: 600Mi
+  env:
+    - name: TOPIC_SEEK_OFFSET
+      value: |
+        {
+          "teamsykmelding.syfo-bekreftet-sykmelding": [
+            [0, "1"],
+            [1, "1"],
+            [2, "1"]
+          ],
+          "teamsykmelding.syfo-sendt-sykmelding": [
+            [0, "1"],
+            [1, "1"],
+            [2, "1"]
+          ]
+        }

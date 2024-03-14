@@ -2,6 +2,7 @@ import kafka, { GROUP_ID } from './client.ts'
 import { BEKREFTET_TOPIC, processFromByPartition, SENDT_TOPIC } from './topic.ts'
 import type { Consumer } from 'kafkajs'
 import logger from '../utils/logger.ts'
+import { env } from '../utils/env.ts'
 
 export const consumer = kafka.consumer({
     groupId: `${GROUP_ID}-${Date.now()}`,
@@ -10,7 +11,7 @@ export const consumer = kafka.consumer({
 export async function initSykmeldingConsumer(): Promise<Consumer> {
     await consumer.connect()
     await consumer.subscribe({
-        topics: [BEKREFTET_TOPIC, SENDT_TOPIC],
+        topics: [/*BEKREFTET_TOPIC, */ SENDT_TOPIC],
         fromBeginning: true,
     })
 
@@ -18,6 +19,11 @@ export async function initSykmeldingConsumer(): Promise<Consumer> {
 }
 
 export async function setSykmeldingConsumerOffsetToEvergreen() {
+    if (env.TOPIC_SEEK_OFFSET == null) {
+        logger.info('No topic seek offset found, not seeking to any offset')
+        return
+    }
+
     logger.info('Seeking to recent data')
     for (const [partition, offset] of processFromByPartition[BEKREFTET_TOPIC]) {
         logger.info(`Seeking to ${BEKREFTET_TOPIC} partition ${partition} offset ${offset}`)
