@@ -1,5 +1,5 @@
 import kafka, { GROUP_ID } from './client.ts'
-import { BEKREFTET_TOPIC, processFromByPartition, SENDT_TOPIC } from './topic.ts'
+import { BEKREFTET_TOPIC, SENDT_TOPIC } from './topic.ts'
 import type { Consumer } from 'kafkajs'
 import logger from '../utils/logger.ts'
 import { env } from '../utils/env.ts'
@@ -23,6 +23,8 @@ export async function setSykmeldingConsumerOffsetToEvergreen() {
         logger.info('No topic seek offset found, not seeking to any offset')
         return
     }
+
+    const processFromByPartition = env.TOPIC_SEEK_OFFSET
 
     logger.info('Seeking to recent data')
     for (const [partition, offset] of processFromByPartition[BEKREFTET_TOPIC]) {
