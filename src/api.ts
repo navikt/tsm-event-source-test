@@ -4,7 +4,7 @@ import inMem from './in-mem/sykmeldte.ts'
 export async function configureApi() {
     new Elysia()
         .get('/is-sykmeldt', ({ headers, set }) => {
-            const fnr = headers['X-Fnr'] ?? null
+            const fnr = headers['x-fnr'] ?? null
 
             if (fnr == null) {
                 set.status = 400
@@ -13,7 +13,7 @@ export async function configureApi() {
                 }
             }
 
-            const isSykmeldt = inMem.isSykmeldt(fnr)
+            const isSykmeldt = inMem.isSykmeldt(fnr, new Date())
             return {
                 isSykmeldt,
             }

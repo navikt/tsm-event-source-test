@@ -1,55 +1,72 @@
 import * as R from 'remeda'
 import logger from '../utils/logger.ts'
+import { isSameDay } from 'date-fns'
 
-class Sykmeldte {
+export class SykmeldteInternal {
     public hasStarted = false
     public initialBatchComplete = false
 
-    private _sykmeldt: Record<string, { expiry: Date; id: string }> = {}
+    private _sykmeldt: Record<string, { expiry: Date; items: { tom: Date; id: string }[] }> = {}
 
     public sykmeldt(fnr: string, id: string, expiry: Date) {
         if (fnr in this._sykmeldt) {
+            // User has sykmelding
             const existing = this._sykmeldt[fnr]
+            const existingItem = existing.items.find((item) => item.id === id)
 
-            // Keep existing if expiry is later than this one
-            if (existing.expiry < expiry) {
-                this._sykmeldt[fnr] = { expiry, id }
+            if (existingItem != null) {
+                // Item exists, update expiry
+                existingItem.tom = expiry
+                if (isSameDay(existing.expiry, expiry)) {
+                    // This item was the newest exiry date
+                    existing.expiry = expiry
+                }
+                return
+            } else {
+                // New item
+                existing.items.push({ tom: expiry, id })
+                if (existing.expiry < expiry) {
+                    existing.expiry = expiry
+                }
             }
         } else {
-            this._sykmeldt[fnr] = { expiry, id }
+            // First time user has sykmelding
+            this._sykmeldt[fnr] = { expiry, items: [{ tom: expiry, id }] }
         }
     }
 
-    public friskmeldt(fnr: string) {
-        delete this._sykmeldt[fnr]
-    }
-
-    public isSykmeldt(fnr: string) {
+    public isSykmeldt(fnr: string, now: Date) {
         let sykmeldt = this._sykmeldt[fnr]
 
         if (sykmeldt == null) return false
 
-        return new Date() < sykmeldt.expiry
+        return now <= sykmeldt.expiry
     }
 
     public tombstone(id: string) {
-        const fnr = R.pipe(
+        const pair = R.pipe(
             this._sykmeldt,
-            R.toPairs,
-            R.find(([_, value]) => value.id === id),
+            R.toPairs.strict,
+            R.find(([_, value]) => value.items.some((item) => item.id === id)),
         )
 
-        if (!fnr?.length) return
+        if (!pair) {
+            // User not sykmeldt, nothing to remove
+            return
+        }
 
-        this.friskmeldt(fnr[0])
+        const [key, value] = pair
+        value.items = value.items.filter((item) => item.id !== id)
+        if (value.items.length === 0) {
+            delete this._sykmeldt[key]
+        }
     }
 
     public get size(): number {
         return Object.keys(this._sykmeldt).length
     }
 
-    public cleanExpired() {
-        const now = new Date()
+    public cleanExpired(now: Date) {
         const expired = Object.entries(this._sykmeldt).filter(([_, value]) => value.expiry < now)
         expired.forEach(([key]) => delete this._sykmeldt[key])
 
@@ -64,4 +81,4 @@ class Sykmeldte {
     }
 }
 
-export default new Sykmeldte()
+export default new SykmeldteInternal()

@@ -9,7 +9,7 @@ spec:
   image: {{image}}
   replicas:
     min: 1
-    max: 3
+    max: 2
     cpuThresholdPercentage: 90
   port: 3000
   kafka:
@@ -27,7 +27,7 @@ spec:
     timeout: 5
   resources:
     limits:
-      cpu: 2500m
+      cpu: 1000m
       memory: 1Gi
     requests:
       cpu: 150m

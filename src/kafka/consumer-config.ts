@@ -11,7 +11,7 @@ export const consumer = kafka.consumer({
 export async function initSykmeldingConsumer(): Promise<Consumer> {
     await consumer.connect()
     await consumer.subscribe({
-        topics: [/*BEKREFTET_TOPIC, */ SENDT_TOPIC],
+        topics: [BEKREFTET_TOPIC, SENDT_TOPIC],
         fromBeginning: true,
     })
 
